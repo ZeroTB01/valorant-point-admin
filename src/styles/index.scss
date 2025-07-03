@@ -1,0 +1,128 @@
+// 重置样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  
+  &:hover {
+    background: #a8a8a8;
+  }
+}
+
+// Element Plus 样式覆盖
+.el-button {
+  font-weight: 400;
+}
+
+.el-dialog {
+  border-radius: 8px;
+  
+  .el-dialog__header {
+    border-bottom: 1px solid #e4e7ed;
+    padding: 20px;
+  }
+  
+  .el-dialog__body {
+    padding: 20px;
+  }
+}
+
+.el-table {
+  font-size: 14px;
+  
+  .el-table__header {
+    th {
+      background-color: #f5f7fa;
+      color: #303133;
+      font-weight: 600;
+    }
+  }
+}
+
+// 分页居右
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+// 页面容器
+.page-container {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 60px);
+}
+
+// 内容卡片
+.content-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+// 搜索栏
+.search-bar {
+  margin-bottom: 20px;
+  
+  .el-form-item {
+    margin-bottom: 0;
+  }
+}
+
+// 操作按钮组
+.action-buttons {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// 状态标签
+.status-tag {
+  &.active {
+    color: #67c23a;
+    background-color: #f0f9ff;
+    border-color: #b3e19d;
+  }
+  
+  &.inactive {
+    color: #909399;
+    background-color: #f4f4f5;
+    border-color: #d3d4d6;
+  }
+}
+
+// 图片预览
+.image-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+}
