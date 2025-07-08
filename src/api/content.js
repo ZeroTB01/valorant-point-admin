@@ -131,10 +131,10 @@ export function batchUpdateContent(data) {
 /**
  * 审核内容
  */
-export function reviewContent(contentId, data) {
+export function reviewContent(id, status) {
   return request({
-    url: `/content/${contentId}/review`,
+    url: `/content/${id}/status`,
     method: 'put',
-    data
+    params: { status }
   })
 }

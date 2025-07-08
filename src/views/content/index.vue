@@ -4,7 +4,13 @@
     <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="queryParams" @submit.prevent="handleSearch">
         <el-form-item label="内容类型">
-          <el-select v-model="queryParams.contentType" placeholder="全部" clearable>
+          <el-select
+            v-model="queryParams.contentType"
+            placeholder="全部"
+            clearable
+            style="width: 140px"
+            @change="handleSearch"
+          >
             <el-option label="全部" value="" />
             <el-option label="视频" value="video" />
             <el-option label="图文" value="article" />
@@ -13,7 +19,13 @@
         </el-form-item>
         
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 120px">
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部"
+            clearable
+            style="width: 120px"
+            @change="handleSearch"
+          >
             <el-option label="全部" value="" />
             <el-option label="待审核" :value="0" />
             <el-option label="已发布" :value="1" />
@@ -136,15 +148,6 @@
               通过
             </el-button>
             <el-button 
-              v-if="row.status === 0"
-              size="small" 
-              type="danger" 
-              link 
-              @click="handleReject(row)"
-            >
-              拒绝
-            </el-button>
-            <el-button 
               v-else-if="row.status === 1"
               size="small" 
               type="warning" 
@@ -152,6 +155,15 @@
               @click="handleOffline(row)"
             >
               下架
+            </el-button>
+            <el-button 
+              v-else-if="row.status === 2"
+              size="small" 
+              type="success" 
+              link 
+              @click="handlePublish(row)"
+            >
+              重新发布
             </el-button>
             <el-button size="small" type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
@@ -392,9 +404,7 @@ const handlePublish = async (row) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    
-    // 使用审核接口
-    await reviewContent(row.id, { status: 1, reason: '' })
+    await reviewContent(row.id, 1) // 只传 status
     ElMessage.success('发布成功')
     fetchContentList()
   } catch (error) {
