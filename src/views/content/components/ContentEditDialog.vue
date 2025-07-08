@@ -331,11 +331,11 @@ const resetForm = () => {
 const loadOptions = async () => {
   try {
     // 直接使用列表接口
-    const { getHeroList, getMapList, getWeaponList } = await import('@/api/gameData')
+    const { getAllHeroes, getAllMaps, getAllWeapons } = await import('@/api/gameData')
     
     // 获取英雄列表
     try {
-      const heroRes = await getHeroList()
+      const heroRes = await getAllHeroes()
       console.log('英雄数据:', heroRes)
       if (heroRes.code === 200 && heroRes.data) {
         heroOptions.value = heroRes.data.map(hero => ({
@@ -349,7 +349,7 @@ const loadOptions = async () => {
     
     // 获取地图列表
     try {
-      const mapRes = await getMapList()
+      const mapRes = await getAllMaps()
       console.log('地图数据:', mapRes)
       if (mapRes.code === 200 && mapRes.data) {
         mapOptions.value = mapRes.data.map(map => ({
@@ -363,7 +363,7 @@ const loadOptions = async () => {
     
     // 获取武器列表
     try {
-      const weaponRes = await getWeaponList()
+      const weaponRes = await getAllWeapons()
       console.log('武器数据:', weaponRes)
       if (weaponRes.code === 200 && weaponRes.data) {
         weaponOptions.value = weaponRes.data.map(weapon => ({
@@ -492,11 +492,11 @@ const uploadImage = async (file) => {
 
 // 提交表单
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate()
-  if (!valid) return
-  
   loading.value = true
   try {
+    const valid = await formRef.value.validate()
+    if (!valid) return
+
     let coverImageUrl = formData.coverImage
     
     // 如果有新选择的图片，先上传

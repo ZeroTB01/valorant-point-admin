@@ -1,7 +1,18 @@
 import request from '@/utils/request'
 
-// ========== 英雄相关 API ==========
-export function getHeroList() {
+// ========== 英雄管理 API ==========
+
+// 获取英雄分页列表（后台管理使用）
+export function getHeroList(params) {
+  return request({
+    url: '/hero/page',
+    method: 'get',
+    params
+  })
+}
+
+// 获取所有英雄列表（不分页）
+export function getAllHeroes() {
   return request({
     url: '/hero/list',
     method: 'get'
@@ -23,6 +34,7 @@ export function createHero(data) {
   })
 }
 
+// 更新英雄信息
 export function updateHero(heroId, data) {
   return request({
     url: `/hero/${heroId}`,
@@ -38,6 +50,14 @@ export function deleteHero(heroId) {
   })
 }
 
+export function batchDeleteHeroes(heroIds) {
+  return request({
+    url: '/hero/batch-delete',
+    method: 'post',
+    data: { heroIds }
+  })
+}
+
 export function updateHeroStatus(heroId, status) {
   return request({
     url: `/hero/${heroId}/status`,
@@ -46,8 +66,42 @@ export function updateHeroStatus(heroId, status) {
   })
 }
 
-// ========== 地图相关 API ==========
-export function getMapList() {
+export function batchUpdateHeroStatus(heroIds, status) {
+  return request({
+    url: '/hero/batch-status',
+    method: 'post',
+    data: { heroIds, status }
+  })
+}
+
+export function getHeroSkills(heroId) {
+  return request({
+    url: `/hero/${heroId}/skills`,
+    method: 'get'
+  })
+}
+
+export function saveHeroSkills(heroId, skills) {
+  return request({
+    url: `/hero/${heroId}/skills`,
+    method: 'post',
+    data: skills // 直接传递数组
+  })
+}
+
+// ========== 地图管理 API ==========
+
+// 获取地图分页列表（后台管理使用）
+export function getMapList(params) {
+  return request({
+    url: '/map/page',
+    method: 'get',
+    params
+  })
+}
+
+// 获取所有地图列表（不分页）
+export function getAllMaps() {
   return request({
     url: '/map/list',
     method: 'get'
@@ -84,8 +138,35 @@ export function deleteMap(mapId) {
   })
 }
 
-// ========== 武器相关 API ==========
-export function getWeaponList() {
+export function batchDeleteMaps(mapIds) {
+  return request({
+    url: '/map/batch-delete',
+    method: 'post',
+    data: { mapIds }
+  })
+}
+
+export function updateMapStatus(mapId, status) {
+  return request({
+    url: `/map/${mapId}/status`,
+    method: 'put',
+    params: { status }
+  })
+}
+
+// ========== 武器管理 API ==========
+
+// 获取武器分页列表（后台管理使用）
+export function getWeaponList(params) {
+  return request({
+    url: '/weapon/page',
+    method: 'get',
+    params
+  })
+}
+
+// 获取所有武器列表（不分页）
+export function getAllWeapons() {
   return request({
     url: '/weapon/list',
     method: 'get'
@@ -122,15 +203,26 @@ export function deleteWeapon(weaponId) {
   })
 }
 
-// ========== 点位相关 API ==========
+export function batchDeleteWeapons(weaponIds) {
+  return request({
+    url: '/weapon/batch-delete',
+    method: 'post',
+    data: { weaponIds }
+  })
+}
+
+// ========== 点位管理 API ==========
+
+// 获取点位分页列表
 export function getPositionList(params) {
   return request({
-    url: '/position/list',
+    url: '/position/page',
     method: 'get',
     params
   })
 }
 
+// 三级筛选点位
 export function filterPositions(params) {
   return request({
     url: '/position/filter',
@@ -169,10 +261,19 @@ export function deletePosition(positionId) {
   })
 }
 
-export function getFilterOptions() {
+export function batchDeletePositions(positionIds) {
   return request({
-    url: '/position/filter-options',
-    method: 'get'
+    url: '/position/batch-delete',
+    method: 'post',
+    data: { positionIds }
+  })
+}
+
+export function updatePositionStatus(positionId, status) {
+  return request({
+    url: `/position/${positionId}/status`,
+    method: 'put',
+    params: { status }
   })
 }
 
@@ -194,6 +295,14 @@ export function getMapOptions() {
 export function getWeaponOptions() {
   return request({
     url: '/weapon/options',
+    method: 'get'
+  })
+}
+
+// 获取筛选条件选项
+export function getFilterOptions() {
+  return request({
+    url: '/position/filter-options',
     method: 'get'
   })
 }
