@@ -1,30 +1,30 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="新增地图"
+    :title="isEdit ? '编辑地图' : '新增地图'"
     width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
   >
     <el-form
       ref="formRef"
-      :model="form"
+      :model="formData"
       :rules="rules"
       label-width="100px"
     >
       <el-form-item label="地图名称" prop="mapName">
-        <el-input v-model="form.mapName" placeholder="请输入地图名称" />
+        <el-input v-model="formData.mapName" placeholder="请输入地图名称" />
       </el-form-item>
       <el-form-item label="地图标识" prop="mapKey">
-        <el-input v-model="form.mapKey" placeholder="请输入地图标识（英文）" />
+        <el-input v-model="formData.mapKey" placeholder="请输入地图标识（英文）" />
       </el-form-item>
       <el-form-item label="地图类型" prop="mapType">
-        <el-input v-model="form.mapType" placeholder="请输入地图类型" />
+        <el-input v-model="formData.mapType" placeholder="请输入地图类型" />
       </el-form-item>
-      <el-form-item label="小地图图片" prop="minimap">
+      <el-form-item label="小地图图片" prop="minimapUrl">
         <div class="image-uploader">
-          <div v-if="minimapUrl" class="image-preview">
-            <img :src="minimapUrl" alt="小地图预览">
+          <div v-if="formData.minimapUrl" class="image-preview">
+            <img :src="formData.minimapUrl" alt="小地图预览">
             <div class="image-actions">
               <el-icon class="action-icon" @click="selectMinimap"><Refresh /></el-icon>
               <el-icon class="action-icon" @click="removeMinimap"><Delete /></el-icon>
@@ -44,10 +44,11 @@
         </div>
         <div class="el-upload__tip">支持 jpg/png/gif/webp 文件，不超过 10MB</div>
       </el-form-item>
-      <el-form-item label="全景图图片" prop="overview">
+
+      <el-form-item label="全景图图片" prop="overviewUrl">
         <div class="image-uploader">
-          <div v-if="overviewUrl" class="image-preview">
-            <img :src="overviewUrl" alt="全景图预览">
+          <div v-if="formData.overviewUrl" class="image-preview">
+            <img :src="formData.overviewUrl" alt="全景图预览">
             <div class="image-actions">
               <el-icon class="action-icon" @click="selectOverview"><Refresh /></el-icon>
               <el-icon class="action-icon" @click="removeOverview"><Delete /></el-icon>
@@ -68,20 +69,20 @@
         <div class="el-upload__tip">支持 jpg/png/gif/webp 文件，不超过 10MB</div>
       </el-form-item>
       <el-form-item label="描述" prop="description">
-        <el-input v-model="form.description" type="textarea" placeholder="请输入地图描述" />
+        <el-input v-model="formData.description" type="textarea" placeholder="请输入地图描述" />
       </el-form-item>
       <el-form-item label="炸弹点位" prop="sitesArr">
-        <el-select v-model="form.sitesArr" multiple placeholder="请选择点位">
+        <el-select v-model="formData.sitesArr" multiple placeholder="请选择点位">
           <el-option label="A" value="A" />
           <el-option label="B" value="B" />
           <el-option label="C" value="C" />
         </el-select>
       </el-form-item>
       <el-form-item label="排序" prop="sortOrder">
-        <el-input-number v-model="form.sortOrder" :min="1" />
+        <el-input-number v-model="formData.sortOrder" :min="1" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
-        <el-select v-model="form.status">
+        <el-select v-model="formData.status">
           <el-option label="启用" :value="1" />
           <el-option label="禁用" :value="0" />
         </el-select>
@@ -89,7 +90,7 @@
     </el-form>
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">创建</el-button>
+      <el-button type="primary" :loading="loading" @click="handleSave">保存</el-button>
     </template>
   </el-dialog>
 </template>
@@ -97,26 +98,33 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { createMap } from '@/api/gameData'
+import { updateMap, createMap } from '@/api/gameData'
 import { Plus, Refresh, Delete } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const dialogVisible = ref(false)
+const isEdit = ref(false)
 const formRef = ref()
 const minimapInput = ref()
 const overviewInput = ref()
 const loading = ref(false)
 const userStore = useUserStore()
 
-const form = reactive({
+const uploadUrl = computed(() => `${import.meta.env.VITE_API_BASE_URL}/file/upload-image`)
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${userStore.token}`
+}))
+
+const formData = reactive({
+  id: null,
   mapKey: '',
   mapName: '',
   mapType: '',
-  minimap: '',
-  overview: '',
+  minimapUrl: '',
+  overviewUrl: '',
   description: '',
-  sitesArr: [], // 多选下拉绑定
-  sites: '',   // 字符串，提交时用
+  sitesArr: [],
+  sites: '',
   sortOrder: 1,
   status: 1
 })
@@ -136,6 +144,39 @@ const minimapUrl = ref('')
 const overviewFile = ref(null)
 const overviewUrl = ref('')
 
+
+// 图片上传前校验
+const beforeImageUpload = (file) => {
+  const isImage = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件！')
+    return false
+  }
+  if (!isLt10M) {
+    ElMessage.error('图片大小不能超过 10MB！')
+    return false
+  }
+  return true
+}
+
+const handleMinimapSuccess = (response) => {
+  if (response.code === 200 && response.data) {
+    formData.minimapUrl = response.data.originalUrl || response.data
+    ElMessage.success('小地图上传成功')
+  } else {
+    ElMessage.error(response.message || '小地图上传失败')
+  }
+}
+
+const handleOverviewSuccess = (response) => {
+  if (response.code === 200 && response.data) {
+    formData.overviewUrl = response.data.originalUrl || response.data
+    ElMessage.success('全景图上传成功')
+  } else {
+    ElMessage.error(response.message || '全景图上传失败')
+  }
+}
 function selectMinimap() {
   minimapInput.value && minimapInput.value.click()
 }
@@ -150,12 +191,12 @@ function handleMinimapChange(e) {
   }
   reader.readAsDataURL(file)
   // 关键：立刻赋值，保证校验通过
-  form.minimap = 'preview'
+  formData.minimap = 'preview'
 }
 function removeMinimap() {
   minimapFile.value = null
   minimapUrl.value = ''
-  form.minimap = ''
+  formData.minimap = ''
   if (minimapInput.value) minimapInput.value.value = ''
   // 关键：清空后，表单校验也要重新触发
   formRef.value?.validateField('minimap')
@@ -175,12 +216,12 @@ function handleOverviewChange(e) {
   }
   reader.readAsDataURL(file)
   // 关键：立刻赋值，保证校验通过
-  form.overview = 'preview'
+  formData.overview = 'preview'
 }
 function removeOverview() {
   overviewFile.value = null
   overviewUrl.value = ''
-  form.overview = ''
+  formData.overview = ''
   if (overviewInput.value) overviewInput.value.value = ''
   // 关键：清空后，表单校验也要重新触发
   formRef.value?.validateField('overview')
@@ -210,7 +251,8 @@ function handleClose() {
 }
 
 function resetForm() {
-  Object.assign(form, {
+  Object.assign(formData, {
+    id: null,
     mapKey: '',
     mapName: '',
     mapType: '',
@@ -250,52 +292,74 @@ async function uploadImage(file) {
       throw new Error(result.message || '图片上传失败')
     }
   } catch (error) {
+    // 这里 error.message 就是后端 message
     ElMessage.error(error.message || '图片上传失败')
     throw error
   }
 }
 
-async function handleSubmit() {
-  loading.value = true
+async function handleSave() {
   try {
-    const valid = await formRef.value.validate()
-    if (!valid) return
-    // 上传图片，拿到真实地址
+    await formRef.value.validate()
+    // 只有选择了新图片才上传，否则用原地址
     if (minimapFile.value) {
-      form.minimap = await uploadImage(minimapFile.value)
+      formData.minimap = await uploadImage(minimapFile.value)
     }
+    // 如果没选新图片，且是编辑，保持原有地址
+    // 如果是新增，formData.minimap 必须有值（校验已保证）
+    if (!formData.minimap || formData.minimap === 'preview') {
+      formData.minimap = minimapUrl.value
+    }
+
     if (overviewFile.value) {
-      form.overview = await uploadImage(overviewFile.value)
+      formData.overview = await uploadImage(overviewFile.value)
     }
-    form.sites = form.sitesArr.length
-    // 提交表单
-    const payload = {
-      mapKey: form.mapKey,
-      mapName: form.mapName,
-      mapType: form.mapType,
-      minimap: form.minimap,
-      overview: form.overview,
-      description: form.description,
-      siteCount: form.sites, // int类型
-      sortOrder: form.sortOrder,
-      status: form.status
+    if (!formData.overview || formData.overview === 'preview') {
+      formData.overview = overviewUrl.value
     }
-    const res = await createMap(payload)
+
+    formData.siteCount = formData.sitesArr.length
+    let res
+    if (isEdit.value) {
+      res = await updateMap(formData, userStore.token)
+    } else {
+      res = await createMap(formData)
+    }
     if (res.code === 200) {
-      ElMessage.success('新增成功')
-      handleClose()
+      ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
+      dialogVisible.value = false
       emit('success')
     } else {
-      ElMessage.error(res.message || '新增失败')
+      ElMessage.error(res.message || '操作失败')
     }
   } catch (e) {
-    // 已有ElMessage
-  } finally {
-    loading.value = false
+    if (e && e.message) {
+      ElMessage.error(e.message)
+    } else {
+      ElMessage.error('请求失败，请重试')
+    }
   }
 }
 
-defineExpose({ open: () => { dialogVisible.value = true } })
+function open(map) {
+  if (map) {
+    isEdit.value = true
+    Object.assign(formData, map)
+    minimapUrl.value = map.minimap || ''
+    overviewUrl.value = map.overview || ''
+    minimapFile.value = null
+    overviewFile.value = null
+  } else {
+    isEdit.value = false
+    Object.assign(formData, { id: null, mapName: '', mapKey: '', mapType: '' })
+    minimapUrl.value = ''
+    overviewUrl.value = ''
+    minimapFile.value = null
+    overviewFile.value = null
+  }
+  dialogVisible.value = true
+}
+defineExpose({ open })
 </script>
 
 <style lang="scss" scoped>
@@ -326,7 +390,7 @@ defineExpose({ open: () => { dialogVisible.value = true } })
       opacity: 0;
       transition: opacity 0.3s;
       .action-icon {
-        font-size: 22px;
+        font-size: 24px;
         color: #fff;
         cursor: pointer;
         &:hover {
@@ -354,12 +418,12 @@ defineExpose({ open: () => { dialogVisible.value = true } })
       color: #409eff;
     }
     .upload-icon {
-      font-size: 28px;
+      font-size: 32px;
       color: #8c939d;
       margin-bottom: 8px;
     }
     .upload-text {
-      font-size: 13px;
+      font-size: 14px;
       color: #666;
     }
   }

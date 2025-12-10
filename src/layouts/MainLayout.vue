@@ -19,7 +19,7 @@
         <el-menu-item
           v-for="route in menuRoutes"
           :key="route.path"
-          :index="route.path"
+          :index="'/' + route.path"
         >
           <el-icon>
             <component :is="route.meta.icon" />
@@ -102,7 +102,6 @@ const isCollapse = ref(false)
 // 当前路由
 const currentRoute = computed(() => route)
 const activeMenu = computed(() => route.path)
-
 // 菜单路由
 const menuRoutes = computed(() => {
   return router.options.routes[1].children.filter(route => route.meta?.title)

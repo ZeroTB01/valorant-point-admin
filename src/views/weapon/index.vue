@@ -80,6 +80,20 @@
         @current-change="getList"
       />
     </el-card>
+
+    <WeaponEditDialog
+      :visible="addDialogVisible"
+      :isEdit="false"
+      @update:visible="val => addDialogVisible = val"
+      @submit="handleAddSubmit"
+    />
+    <WeaponEditDialog
+      :visible="editDialogVisible"
+      :isEdit="true"
+      :initData="editFormData"
+      @update:visible="val => editDialogVisible = val"
+      @submit="handleEditSubmit"
+    />
   </div>
 </template>
 
@@ -87,10 +101,17 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
+import WeaponEditDialog from './components/WeaponEditDialog.vue'
+import { getWeaponList, createWeapon, updateWeapon, deleteWeapon } from '@/api/gameData'
+import { ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)
+
+const addDialogVisible = ref(false)
+const editDialogVisible = ref(false)
+const editFormData = ref(null)
 
 const searchForm = reactive({
   keyword: ''
@@ -100,6 +121,7 @@ const pageParams = reactive({
   current: 1,
   size: 10
 })
+
 
 // 中文映射
 const formatWeaponType = (type) => {
@@ -133,8 +155,12 @@ const wallColor = (level) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch(`http://localhost:8080/api/weapon/page?current=${pageParams.current}&size=${pageParams.size}&keyword=${searchForm.keyword || ''}`)
-    const data = await res.json()
+    const params = {
+      current: pageParams.current,
+      size: pageParams.size,
+      keyword: searchForm.keyword || ''
+    }
+    const data = await getWeaponList(params)
     if (data.code === 200 && data.data) {
       tableData.value = data.data.records
       total.value = data.data.total
@@ -160,16 +186,67 @@ const handleReset = () => {
 }
 
 const handleAdd = () => {
-  ElMessage.info('TODO: 打开新增武器弹窗')
+  addDialogVisible.value = true
 }
 
 const handleEdit = (row) => {
-  ElMessage.info(`编辑武器: ${row.weaponName}`)
+  editFormData.value = { ...row }
+  editDialogVisible.value = true
 }
 
-const handleDelete = (row) => {
-  ElMessage.info(`删除武器: ${row.weaponName}`)
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除武器「${row.weaponName}」吗？此操作不可恢复！`,
+      '提示',
+      { type: 'warning' }
+    )
+    const data = await deleteWeapon(row.id)
+    if (data.code === 200) {
+      ElMessage.success('删除成功')
+      getList()
+    } else {
+      ElMessage.error(data.message || '删除失败')
+    }
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
 }
+
+const handleAddSubmit = async (formData) => {
+  try {
+    const data = await createWeapon(formData)
+    if (data.code === 200) {
+      ElMessage.success('新增成功')
+      addDialogVisible.value = false
+      getList()
+    } else {
+      ElMessage.error(data.message || '新增失败')
+    }
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('请求失败')
+  }
+}
+
+const handleEditSubmit = async (formData) => {
+  try {
+    const data = await updateWeapon(formData.id, formData)
+    if (data.code === 200) {
+      ElMessage.success('编辑成功')
+      editDialogVisible.value = false
+      getList()
+    } else {
+      ElMessage.error(data.message || '编辑失败')
+    }
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('请求失败')
+  }
+}
+
 
 onMounted(() => {
   getList()

@@ -66,6 +66,7 @@ import MapEditDialog from './components/MapEditDialog.vue'
 import { ElMessageBox } from 'element-plus'
 import { deleteMap } from '@/api/gameData' // 如果有封装
 import { getMapList } from '@/api/gameData'
+import { updateMap } from '@/api/gameData'
 
 const mapEditDialogRef = ref()
 
@@ -120,7 +121,7 @@ const handleAdd = () => {
 }
 
 const handleEdit = (row) => {
-  ElMessage.info(`点击编辑地图: ${row.mapName}`)
+  mapEditDialogRef.value.open(row)
 }
 
 const handleDelete = async (row) => {
